@@ -1,0 +1,22 @@
+{
+  "name": "fruit",
+  "version": "0.1.0",
+  "description": "A parameterized generative fruit — exploring the morphospace of spikes, nodules, scales, ribs and seeds",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "build": "node scripts/build.mjs",
+    "gallery": "node scripts/gallery.mjs",
+    "interior": "node scripts/interior.mjs"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "lil-gui": "^0.21.0",
+    "three": "^0.185.1",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}
