@@ -11,7 +11,7 @@ spiky, how long, how many nodules, how scaly, how many seeds and where.
 The flesh is semi-transparent and the fruit slices open, because the seeds are the
 point. A fruit is, after all, mostly a strategy for moving seeds around.
 
-Sibling project to the [fish rig](https://marine.exe.xyz) — same idea (a creature
+Sibling project to the [fish rig](https://fishes.exe.xyz) — same idea (a creature
 *is* its parameter tree, and the tree fits in a URL), completely different anatomy.
 
 ```sh
