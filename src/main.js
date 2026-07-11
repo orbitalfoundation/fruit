@@ -8,7 +8,9 @@ import { ARRANGEMENTS } from './core/math.js';
 import { Fruit } from './geom/fruit.js';
 import { SEED_MODES } from './geom/seeds.js';
 import { makeMaterials, applySkin } from './shading/materials.js';
-import { buildEnvironment, buildTable } from './scene/environment.js';
+import { buildTable } from './scene/environment.js';
+import { buildJungle } from './scene/jungle.js';
+import { buildLensFlare } from './scene/lensflare.js';
 import { encodeGenome, encodeGenomeSync, decodeGenome } from './genome.js';
 
 const app = document.getElementById('app');
@@ -33,8 +35,12 @@ controls.autoRotateSpeed = 1.2;
 controls.minDistance = 0.01;
 controls.maxDistance = 40;
 
-const env = buildEnvironment(scene, renderer);
+// Two backdrops. The jungle is the default — these are tropical fruit, and a black
+// studio was both boring and a lie about where they come from. The studio is kept for
+// clean gallery plates, where a busy background just fights the subject.
+const jungle = buildJungle(scene, renderer);
 const table = buildTable(scene);
+const flare = buildLensFlare(renderer);
 
 // ---- the cutaway --------------------------------------------------------------
 // A single clipping plane the user can slide through the fruit. This is the whole
@@ -53,6 +59,12 @@ let fruit = null;
 const ui = {
   blendTo: 'dragonfruit',
   morph: 0,
+  backdrop: 'jungle',
+  dapple: 1.0,
+  canopy: 0.62,
+  sunElevation: 52,
+  sunAzimuth: 40,
+  flare: true,
   autoRotate: true,
   cut: 0,          // 0 = whole fruit, 1 = sliced right through
   showTable: true,
@@ -73,7 +85,9 @@ function frameCamera(preserve = false) {
   camera.near = Math.max(0.0005, s * 0.005);
   camera.far = s * 200 + 10;
   camera.updateProjectionMatrix();
-  env.setScale(s);
+  const domeR = jungle.setScale(s);
+  camera.far = domeR * 2.5;
+  camera.updateProjectionMatrix();
   table.setScale(s, -params.scale * 0.5);
   updateCut();
 }
@@ -85,6 +99,7 @@ function rebuild(preserveCamera = true) {
   // colours on it, and every fruit in the set comes out durian-coloured.
   applySkin(materials, params);
   fruit = new Fruit(params, materials);
+  fruit.traverse((o) => { if (o.isMesh || o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(fruit);
   frameCamera(preserveCamera);
   updateLabels();
@@ -103,6 +118,15 @@ function updateCut() {
     m.clippingPlanes = ui.cut > 0.001 ? clipPlanes : null;
     m.needsUpdate = true;
   }
+}
+
+function applyBackdrop() {
+  jungle.params.elevation = ui.sunElevation;
+  jungle.params.azimuth = ui.sunAzimuth;
+  jungle.params.density = ui.canopy;
+  jungle.setVisible(ui.backdrop === 'jungle');
+  jungle.setDapple(ui.dapple);
+  jungle.apply();
 }
 
 function updateLabels() {
@@ -252,6 +276,16 @@ fIn.add(params.core, 'radius', 0.05, 0.5, 0.01).name('core radius').onChange(str
 fIn.open();
 
 // -- Surface / material
+const fMicro = gui.addFolder('surface detail');
+fMicro.add(params.skin, 'pits', 0, 1.5, 0.01).name('orange-peel pitting').onChange(onSkin);
+fMicro.add(params.skin, 'pitScale', 10, 160, 1).name('pit density').onChange(onSkin);
+fMicro.add(params.skin, 'striations', 0, 1, 0.01).name('lengthwise striations').onChange(onSkin);
+fMicro.add(params.skin, 'striScale', 4, 70, 1).name('striation fineness').onChange(onSkin);
+fMicro.add(params.skin, 'bump', 0, 0.3, 0.005).name('relief strength').onChange(onSkin);
+fMicro.add(params.skin, 'roughVar', 0, 1, 0.01).name('roughness breakup').onChange(onSkin);
+fMicro.add(params.skin, 'wax', 0, 1, 0.01).name('powdery bloom').onChange(onSkin);
+fMicro.open();
+
 const fSkin = gui.addFolder('skin & flesh');
 fSkin.add(params.skin, 'translucency', 0, 1, 0.01).name('translucency').onChange(onSkin);
 fSkin.add(params.skin, 'thickness', 0.05, 2, 0.01).name('flesh depth').onChange(onSkin);
@@ -279,6 +313,12 @@ fTop.close();
 
 // -- Scene
 const fScene = gui.addFolder('scene');
+fScene.add(ui, 'backdrop', ['jungle', 'studio']).name('backdrop').onChange(applyBackdrop);
+fScene.add(ui, 'dapple', 0, 1, 0.01).name('dappled light').onChange(applyBackdrop);
+fScene.add(ui, 'sunElevation', 5, 88, 1).name('sun height').onChange(applyBackdrop);
+fScene.add(ui, 'sunAzimuth', 0, 360, 1).name('sun angle').onChange(applyBackdrop);
+fScene.add(ui, 'canopy', 0.2, 0.95, 0.01).name('canopy density').onChange(applyBackdrop);
+fScene.add(ui, 'flare').name('lens flare');
 fScene.add(ui, 'autoRotate').name('turntable').onChange((v) => (controls.autoRotate = v));
 fScene.add(ui, 'showTable').name('table').onChange((v) => table.setVisible(v));
 fScene.add(ui, 'wireframe').name('wireframe').onChange((v) => {
@@ -366,6 +406,7 @@ if (innerWidth > 560) document.body.classList.add('panel-open');
     materials = makeMaterials(params, clipPlanes);
   }
   applySkin(materials, params);
+  applyBackdrop();
   controls.autoRotate = ui.autoRotate;
   rebuild(false);
   highlightSpecies(currentSpecies);
@@ -389,8 +430,13 @@ function animate() {
     rebuild(true);
   }
 
+  jungle.update(dt);
   controls.update();
   renderer.render(scene, camera);
+
+  // The flare composites over the finished frame; the fruit occludes it.
+  if (ui.flare && ui.backdrop === 'jungle') flare.render(camera, jungle.sun, [fruit], dt);
+  else flare.enabled = false;
 
   frames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = Math.round(frames / fpsT); frames = 0; fpsT = 0; }

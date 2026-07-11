@@ -28,7 +28,13 @@ const server = http.createServer(async (req, res) => {
     const full = normalize(join(ROOT, path));
     if (!full.startsWith(ROOT)) { res.writeHead(403).end('forbidden'); return; }
     const body = await readFile(full);
-    res.writeHead(200, { 'Content-Type': MIME[extname(full)] || 'application/octet-stream' });
+    // No caching, ever. A dev server that lets the browser cache source modules
+    // means an edit can silently fail to reach the page — and you end up tuning a
+    // shader the browser is not reading.
+    res.writeHead(200, {
+      'Content-Type': MIME[extname(full)] || 'application/octet-stream',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+    });
     res.end(body);
   } catch (e) {
     res.writeHead(e.code === 'ENOENT' ? 404 : 500).end(String(e.message));

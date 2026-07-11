@@ -109,6 +109,23 @@ export function defaultParams() {
       mottle: 0.25,
       mottleScale: 8.0,
       blush: 0.0,
+
+      // Micro-surface. A rind is never uniformly anything, and a constant roughness
+      // over a smooth normal is the loudest "this is CG" tell there is.
+      // Frequencies are in units of the fruit's own height, so they hold their look
+      // as `scale` changes. Keep them well below the mesh's sampling rate: pushed too
+      // fine, procedural relief doesn't read as texture, it aliases into TV static.
+      pits: 0.4,        // orange-peel dimpling — dense, shallow, isotropic
+      pitScale: 30,
+      striations: 0.22, // faint streaks stretched ALONG the fruit's growth axis
+      striScale: 16,
+      roughVar: 0.5,    // waxy patches and dull patches
+      // Keep this SMALL. The derivative-based normal perturbation divides the height
+      // gradient by the (tiny) screen-space determinant, so it is not scale-normalised
+      // and its useful range is nothing like 0..1: at 0.22 the normals blow out and the
+      // rind grows glossy grey worms; 0.08 is a well-pitted orange peel.
+      bump: 0.08,       // how hard the relief bends the shading normal
+      wax: 0.18,        // the powdery grazing-angle bloom of a plum or a grape
     },
 
     mesh: { segU: 160, segV: 128 },

@@ -124,6 +124,30 @@ src/species/presets.js  16 fruit chosen to span the space, not the supermarket
 src/genome.js           fruit ⇄ URL
 ```
 
+## Surface & light
+
+A constant roughness over a smooth normal is the loudest "this is CG" tell there is, so
+the rind gets a **split PBR** — the body is a semi-matte waxy skin, the features (a
+dragon fruit's bracts, a durian's spines) are a different material: drier, rougher,
+harder in the specular, no bloom.
+
+- **Orange-peel pitting** — dense, shallow, isotropic dimples. It shatters the specular
+  into a thousand pieces instead of one clean plastic highlight, and it is the single
+  biggest thing that stops a fruit looking injection-moulded.
+- **Lengthwise striations** — noise stretched hard *along* the growth axis, because a
+  real rind's fibres and colour streaks all line up with how it grew. These tint the
+  albedo and deliberately **do not** touch the normal: as a height field they're
+  literally snakes, and lighting them gave the durian glossy grey worms.
+- **Roughness breakup** — waxy patches and dull patches.
+- **A powdery bloom** at grazing angles, like a plum's.
+- All of it is procedural, with an **analytic LOD fade** (`fwidth`) — a procedural
+  texture has no mip pyramid, so without it the pitting aliases into crawling static.
+
+The light is a jungle: a canopy with gaps burning through it, and a **dappled key** —
+a spotlight projecting a leaf gobo — so the fruit is lit by *broken* light. Real
+outdoor light is never one clean source, and a single key is why product shots look
+like product shots. Toggle to `studio` for clean plates.
+
 ## Accuracy
 
 Numbers are real where the botany gave real ones — durian spines are 0.7–1.7 cm on a
