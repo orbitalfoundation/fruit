@@ -2,6 +2,8 @@
 
 **Live: [fruit.exe.xyz](https://fruit.exe.xyz)**
 
+![A gallery of generated fruit: durian, pineapple, dragon fruit, salak, carambola, cherimoya, kiwano, hala, and three sliced open to show the seeds inside](examples/hero.png)
+
 A real-time, procedurally generated fruit. Not a model of *a* fruit — a model of the
 **space** of possible fruit, with sliders for the axes botany actually varies: how
 spiky, how long, how many nodules, how scaly, how many seeds and where.
