@@ -50,9 +50,10 @@ const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 10);
 const clipPlanes = [clipPlane];
 
 // ---- state --------------------------------------------------------------------
-let params = makeSpecies('durian');
-let genomeBase = { s: 'durian' };
-let currentSpecies = 'durian';
+const DEFAULT_ID = SPECIES_ORDER[Math.floor(Math.random() * SPECIES_ORDER.length)];
+let params = makeSpecies(DEFAULT_ID);
+let genomeBase = { s: DEFAULT_ID };
+let currentSpecies = DEFAULT_ID;
 let materials = makeMaterials(params, clipPlanes);
 let fruit = null;
 
